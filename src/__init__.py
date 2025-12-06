@@ -1,0 +1,1 @@
+"""Love Maze game package"""
