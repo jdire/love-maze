@@ -6,21 +6,25 @@ Navigate through mazes to reach the heart endzone and progress to next level
 
 import pygame
 import sys
+import asyncio
 from src.game import Game
 
-def main():
+async def main():
     """Main entry point for Love Maze game"""
+    print("Initializing pygame...")
     pygame.init()
     
+    print("Creating game instance...")
     # Create game instance
     game = Game()
     
-    # Run game loop
-    game.run()
+    print("Starting game loop...")
+    # Run game loop with async support for web
+    await game.run()
     
     # Cleanup
     pygame.quit()
     sys.exit()
 
-if __name__ == "__main__":
-    main()
+# Start the game
+asyncio.run(main())

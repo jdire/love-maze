@@ -60,29 +60,33 @@ class Player:
     
     def draw(self, screen):
         """Draw player as a pixelated character"""
-        # Draw player as animated heart character
+        # Draw player as ring character
         self.draw_heart_character(screen)
     
     def draw_heart_character(self, screen):
-        """Draw player as a cute 8-bit heart character"""
+        """Draw player as a detailed 16-bit ring with diamond"""
         cx, cy = self.rect.center
-        pixel = 3
+        pixel = 2  # Smaller pixels for more detail
         
-        # Heart body
-        heart_pattern = [
-            [0, 1, 1, 0, 0, 1, 1, 0],
-            [1, 2, 2, 1, 1, 2, 2, 1],
-            [1, 2, 2, 2, 2, 2, 2, 1],
-            [1, 2, 2, 2, 2, 2, 2, 1],
-            [0, 1, 2, 2, 2, 2, 1, 0],
-            [0, 0, 1, 2, 2, 1, 0, 0],
-            [0, 0, 0, 1, 1, 0, 0, 0],
+        # Ring pattern (16-bit style with shading)
+        ring_pattern = [
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+            [0, 1, 2, 3, 3, 3, 3, 3, 3, 2, 1, 0],
+            [1, 2, 3, 3, 0, 0, 0, 0, 3, 3, 2, 1],
+            [1, 2, 3, 0, 0, 0, 0, 0, 0, 3, 2, 1],
+            [1, 2, 3, 0, 0, 0, 0, 0, 0, 3, 2, 1],
+            [1, 2, 3, 0, 0, 0, 0, 0, 0, 3, 2, 1],
+            [1, 2, 3, 3, 0, 0, 0, 0, 3, 3, 2, 1],
+            [0, 1, 2, 3, 3, 3, 3, 3, 3, 2, 1, 0],
+            [0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
         ]
         
-        start_x = cx - (4 * pixel)
-        start_y = cy - (3 * pixel)
+        start_x = cx - (6 * pixel)
+        start_y = cy - (5 * pixel)
         
-        for row_idx, row in enumerate(heart_pattern):
+        for row_idx, row in enumerate(ring_pattern):
             for col_idx, cell in enumerate(row):
                 rect = pygame.Rect(
                     start_x + col_idx * pixel,
@@ -90,13 +94,49 @@ class Player:
                     pixel, pixel
                 )
                 if cell == 1:
-                    pygame.draw.rect(screen, DARK_RED, rect)
+                    pygame.draw.rect(screen, DARK_GOLD, rect)  # Dark gold outline
                 elif cell == 2:
-                    pygame.draw.rect(screen, RED, rect)
+                    pygame.draw.rect(screen, (218, 165, 32), rect)  # Medium gold
+                elif cell == 3:
+                    pygame.draw.rect(screen, GOLD, rect)  # Bright gold
         
-        # Draw eyes
-        eye_color = WHITE
-        left_eye = pygame.Rect(cx - 6, cy - 3, 2, 2)
-        right_eye = pygame.Rect(cx + 4, cy - 3, 2, 2)
-        pygame.draw.rect(screen, eye_color, left_eye)
-        pygame.draw.rect(screen, eye_color, right_eye)
+        # Draw detailed diamond on top of ring
+        diamond_pattern = [
+            [0, 0, 0, 1, 1, 0, 0, 0],
+            [0, 0, 1, 2, 2, 1, 0, 0],
+            [0, 1, 2, 3, 3, 2, 1, 0],
+            [1, 2, 3, 4, 4, 3, 2, 1],
+            [0, 1, 2, 3, 3, 2, 1, 0],
+            [0, 0, 1, 2, 2, 1, 0, 0],
+            [0, 0, 0, 1, 1, 0, 0, 0],
+        ]
+        
+        diamond_x = cx - (4 * pixel)
+        diamond_y = cy - (10 * pixel)
+        
+        for row_idx, row in enumerate(diamond_pattern):
+            for col_idx, cell in enumerate(row):
+                if cell:
+                    rect = pygame.Rect(
+                        diamond_x + col_idx * pixel,
+                        diamond_y + row_idx * pixel,
+                        pixel, pixel
+                    )
+                    if cell == 1:
+                        pygame.draw.rect(screen, (70, 130, 180), rect)  # Steel blue
+                    elif cell == 2:
+                        pygame.draw.rect(screen, (135, 206, 250), rect)  # Light sky blue
+                    elif cell == 3:
+                        pygame.draw.rect(screen, (173, 216, 230), rect)  # Light blue
+                    elif cell == 4:
+                        pygame.draw.rect(screen, WHITE, rect)  # White sparkle
+        
+        # Add multiple sparkles on ring band
+        sparkles = [
+            (cx + 8, cy - 2),
+            (cx - 8, cy + 2),
+            (cx + 6, cy + 4)
+        ]
+        for sx, sy in sparkles:
+            pygame.draw.rect(screen, WHITE, pygame.Rect(sx, sy, 2, 2))
+            pygame.draw.rect(screen, (200, 200, 255), pygame.Rect(sx+1, sy+1, 1, 1))

@@ -10,9 +10,9 @@ class Maze:
     def __init__(self, level):
         """Initialize maze for given level"""
         self.level = level
-        # Limit maze size to fit on screen (max 19x15)
-        self.width = min(15 + level, 19)
-        self.height = min(13 + level, 15)
+        # Fixed maze size optimized for mobile portrait
+        self.width = 13
+        self.height = 19
         
         # Generate maze
         self.grid = self.generate_maze()
@@ -28,9 +28,9 @@ class Maze:
         maze_pixel_width = self.width * TILE_SIZE
         maze_pixel_height = self.height * TILE_SIZE
         self.offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
-        self.offset_y = (SCREEN_HEIGHT - maze_pixel_height) // 2 + 30
+        self.offset_y = 80  # Fixed top offset for UI space on mobile
         
-        # Place collectible hearts
+        # Place collectible hearts (more hearts on higher levels)
         self.hearts = self.place_hearts()
     
     def generate_maze(self):
@@ -127,7 +127,7 @@ class Maze:
         return True
     
     def draw(self, screen):
-        """Draw the maze"""
+        """Draw the maze with 16-bit style"""
         for y in range(self.height):
             for x in range(self.width):
                 tile = self.grid[y][x]
@@ -137,24 +137,71 @@ class Maze:
                     TILE_SIZE, TILE_SIZE
                 )
                 
-                # Draw based on tile type
+                # Draw based on tile type with gradients
                 if tile == WALL:
-                    pygame.draw.rect(screen, PURPLE, rect)
-                    pygame.draw.rect(screen, DARK_GRAY, rect, 2)
+                    # Purple walls with gradient effect
+                    pygame.draw.rect(screen, DARK_PURPLE, rect)
+                    # Add highlight
+                    highlight = pygame.Rect(rect.x + 2, rect.y + 2, rect.width - 4, rect.height // 3)
+                    pygame.draw.rect(screen, PURPLE, highlight)
+                    # Add border
+                    pygame.draw.rect(screen, (100, 50, 150), rect, 2)
                 elif tile == PATH:
+                    # White path with slight shading
                     pygame.draw.rect(screen, WHITE, rect)
+                    pygame.draw.rect(screen, LIGHT_GRAY, rect, 1)
                 elif tile == START:
-                    pygame.draw.rect(screen, PINK, rect)
+                    # Pink start area with gradient
+                    pygame.draw.rect(screen, DEEP_PINK, rect)
+                    inner = pygame.Rect(rect.x + 3, rect.y + 3, rect.width - 6, rect.height - 6)
+                    pygame.draw.rect(screen, PINK, inner)
                     # Draw small heart
-                    self.draw_pixel_heart(screen, rect.centerx, rect.centery, 8, RED)
+                    self.draw_pixel_heart(screen, rect.centerx, rect.centery, 10, RED)
                 elif tile == END:
-                    pygame.draw.rect(screen, GOLD, rect)
-                    # Draw big heart
-                    self.draw_pixel_heart(screen, rect.centerx, rect.centery, 12, RED)
+                    # Light pink end area with soft glow
+                    pygame.draw.rect(screen, HOT_PINK, rect)
+                    inner = pygame.Rect(rect.x + 3, rect.y + 3, rect.width - 6, rect.height - 6)
+                    pygame.draw.rect(screen, LIGHT_PINK, inner)
+                    # Draw hand reaching
+                    self.draw_pixel_hand(screen, rect.centerx, rect.centery)
         
-        # Draw collectible hearts
+        # Draw collectible hearts with 16-bit detail
         for heart in self.hearts:
-            self.draw_pixel_heart(screen, heart.centerx, heart.centery, 10, PINK)
+            self.draw_detailed_heart(screen, heart.centerx, heart.centery)
+    
+    def draw_detailed_heart(self, screen, cx, cy):
+        """Draw a detailed 16-bit heart for collectibles"""
+        pixel = 2
+        heart_pattern = [
+            [0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
+            [1, 2, 3, 3, 1, 1, 3, 3, 2, 1],
+            [1, 3, 4, 4, 3, 3, 4, 4, 3, 1],
+            [1, 3, 4, 4, 4, 4, 4, 4, 3, 1],
+            [0, 1, 3, 4, 4, 4, 4, 3, 1, 0],
+            [0, 0, 1, 3, 3, 3, 3, 1, 0, 0],
+            [0, 0, 0, 1, 3, 3, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        ]
+        
+        start_x = cx - (5 * pixel)
+        start_y = cy - (4 * pixel)
+        
+        for row_idx, row in enumerate(heart_pattern):
+            for col_idx, cell in enumerate(row):
+                if cell:
+                    rect = pygame.Rect(
+                        start_x + col_idx * pixel,
+                        start_y + row_idx * pixel,
+                        pixel, pixel
+                    )
+                    if cell == 1:
+                        pygame.draw.rect(screen, DARK_RED, rect)
+                    elif cell == 2:
+                        pygame.draw.rect(screen, RED, rect)
+                    elif cell == 3:
+                        pygame.draw.rect(screen, PINK, rect)
+                    elif cell == 4:
+                        pygame.draw.rect(screen, HOT_PINK, rect)
     
     def draw_pixel_heart(self, screen, cx, cy, size, color):
         """Draw a pixelated 8-bit heart"""
@@ -183,3 +230,40 @@ class Maze:
                         pixel, pixel
                     )
                     pygame.draw.rect(screen, color, rect)
+    
+    def draw_pixel_hand(self, screen, cx, cy):
+        """Draw a detailed 16-bit hand with open palm gesture"""
+        pixel = 2
+        
+        # Hand pattern with open palm (all fingers visible, welcoming gesture)
+        hand_pattern = [
+            [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0],
+            [0, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1],
+            [0, 1, 3, 1, 3, 3, 1, 3, 3, 1, 3, 3, 1],
+            [0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+            [1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+            [1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 1],
+            [1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 1],
+            [0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1],
+            [0, 0, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        ]
+        
+        start_x = cx - (6 * pixel)
+        start_y = cy - (5 * pixel)
+        
+        for row_idx, row in enumerate(hand_pattern):
+            for col_idx, cell in enumerate(row):
+                rect = pygame.Rect(
+                    start_x + col_idx * pixel,
+                    start_y + row_idx * pixel,
+                    pixel, pixel
+                )
+                if cell == 1:
+                    pygame.draw.rect(screen, (120, 70, 35), rect)  # Dark brown outline
+                elif cell == 2:
+                    pygame.draw.rect(screen, (210, 160, 120), rect)  # Medium skin tone
+                elif cell == 3:
+                    pygame.draw.rect(screen, (235, 200, 165), rect)  # Light skin tone
+                elif cell == 4:
+                    pygame.draw.rect(screen, (255, 220, 185), rect)  # Highlight

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Love Maze - 16-bit Proposal Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffd1dc 0%, #ffb3d9 50%, #ffc0cb 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 95vw;
+            max-height: 95vh;
+        }
+        
+        #canvas {
+            border: 5px solid #ff69b4;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+            max-width: 100%;
+            max-height: 70vh;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        #info {
+            margin-top: 15px;
+            text-align: center;
+            color: #c71585;
+            font-size: 14px;
+            max-width: 800px;
+        }
+        
+        #info h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        
+        #info p {
+            margin: 5px 0;
+        }
+        
+        .heart {
+            color: #ff1493;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @media (max-width: 850px) {
+            #game-container {
+                padding: 10px;
+            }
+            
+            #info {
+                font-size: 12px;
+            }
+            
+            #info h2 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <div id="info">
+            <h2><span class="heart">♥</span> Love Maze <span class="heart">♥</span></h2>
+            <p><strong>Desktop:</strong> Arrow Keys or WASD to move | R to Reset | ESC to Quit</p>
+            <p><strong>Mobile:</strong> Tap where you want to move | Swipe to move quickly</p>
+            <p>Guide the ring through the maze to the waiting hand! Collect hearts for bonus points.</p>
+        </div>
+    </div>
+    
+    <script src="love_maze.js"></script>
+</body>
+</html>
