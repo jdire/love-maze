@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  },
+  "mimeTypes": {
+    ".wasm": "application/wasm",
+    ".js": "text/javascript",
+    ".json": "application/json"
+  },
+  "globalHeaders": {
+    "Access-Control-Allow-Origin": "*",
+    "Cross-Origin-Embedder-Policy": "require-corp",
+    "Cross-Origin-Opener-Policy": "same-origin"
+  }
+}

@@ -3,8 +3,9 @@
 # Lines starting with # are comments and will be ignored
 # CorrectAnswerNumber is 1-4 indicating which answer is correct
 
-What is the most romantic city in the world?|Paris|London|New York|Tokyo|1
-Which flower symbolizes love?|Rose|Tulip|Daisy|Sunflower|1
-What date is Valentine's Day?|February 14|January 14|March 14|April 14|1
-What shape is most associated with love?|Heart|Star|Circle|Square|1
-Which god is associated with love in Greek mythology?|Eros|Zeus|Apollo|Hades|1
+Who will love you forever more?|Joe|Jack|Brian|Stuart|1
+Who is Joe's Best Friend?|Trevor|Anchen|Alex|Louis|2
+Who do I want to marry?|Kate|Fred|Anchen|Ruby|3
+I am in no small part the man i am today because of you|True|False|Are you joking|Who are you|1
+You and I will be together for?|Ever|A while|Short Term|who are you?|1
+

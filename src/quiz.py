@@ -20,8 +20,41 @@ class Quiz:
         self.answered = False
         self.correct = False
         
+        # Initialize sound effects
+        self.correct_sound = None
+        self.wrong_sound = None
+        try:
+            # Create simple beep sounds (works on web and desktop)
+            self.create_sounds()
+        except Exception as e:
+            print(f"Could not create quiz sounds: {e}")
+        
         # Load questions from file
         self.load_questions()
+    
+    def create_sounds(self):
+        """Create simple correct/wrong sound effects"""
+        try:
+            import numpy as np
+            sample_rate = 22050
+            
+            # Correct sound - ascending chime
+            duration = 0.2
+            t = np.linspace(0, duration, int(sample_rate * duration))
+            correct_wave = np.sin(2 * np.pi * 523 * t) * 0.3  # C note
+            correct_wave += np.sin(2 * np.pi * 659 * t) * 0.3  # E note
+            correct_wave = (correct_wave * 32767).astype(np.int16)
+            correct_stereo = np.column_stack((correct_wave, correct_wave))
+            self.correct_sound = pygame.sndarray.make_sound(correct_stereo)
+            
+            # Wrong sound - descending buzz
+            wrong_wave = np.sin(2 * np.pi * 200 * t) * 0.3
+            wrong_wave += np.sin(2 * np.pi * 150 * t) * 0.3
+            wrong_wave = (wrong_wave * 32767).astype(np.int16)
+            wrong_stereo = np.column_stack((wrong_wave, wrong_wave))
+            self.wrong_sound = pygame.sndarray.make_sound(wrong_stereo)
+        except Exception as e:
+            print(f"Could not create sound effects: {e}")
     
     def load_questions(self):
         """Load questions from questions.txt file"""
@@ -83,6 +116,15 @@ class Quiz:
             self.selected_answer = answer_index
             self.answered = True
             self.correct = (answer_index == self.current_question['correct'])
+            
+            # Play sound effect
+            try:
+                if self.correct and self.correct_sound:
+                    self.correct_sound.play()
+                elif not self.correct and self.wrong_sound:
+                    self.wrong_sound.play()
+            except Exception as e:
+                print(f"Could not play sound: {e}")
     
     def handle_click(self, pos):
         """Handle mouse/touch click on quiz screen"""
@@ -105,12 +147,18 @@ class Quiz:
                 button_height
             )
             
-            if button_rect.collidepoint(x, y) and not self.answered:
+            # Allow clicking if not answered, or if wrong answer (to retry)
+            can_click = not self.answered or (self.answered and not self.correct)
+            if button_rect.collidepoint(x, y) and can_click:
+                # Reset if retrying after wrong answer
+                if self.answered and not self.correct:
+                    self.answered = False
+                    self.selected_answer = None
                 self.select_answer(i)
-                return True
+                return False  # Don't progress yet
         
-        # Continue button (after answering)
-        if self.answered:
+        # Continue button (only after correct answer)
+        if self.answered and self.correct:
             continue_rect = pygame.Rect(
                 SCREEN_WIDTH // 2 - 100,
                 680,
@@ -150,12 +198,12 @@ class Quiz:
             
             # Determine button color
             if self.answered:
-                if i == self.current_question['correct']:
-                    color = (0, 200, 0)  # Green for correct answer
+                if i == self.selected_answer and self.correct:
+                    color = (0, 200, 0)  # Green for correct answer when selected
                 elif i == self.selected_answer and not self.correct:
                     color = (200, 0, 0)  # Red for wrong answer
                 else:
-                    color = GRAY
+                    color = GRAY  # Gray for all other buttons
             elif self.selected_answer == i:
                 color = HOT_PINK
             else:
@@ -176,21 +224,27 @@ class Quiz:
                 result_text = "Correct! +50 points"
                 result_color = (0, 150, 0)
             else:
-                result_text = "Wrong answer!"
+                result_text = "Wrong answer! Try again."
                 result_color = (150, 0, 0)
             
             result = self.font_medium.render(result_text, True, result_color)
             result_rect = result.get_rect(centerx=SCREEN_WIDTH // 2, top=630)
             screen.blit(result, result_rect)
             
-            # Continue button
-            continue_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, 680, 200, 50)
-            pygame.draw.rect(screen, PURPLE, continue_rect, border_radius=10)
-            pygame.draw.rect(screen, DARK_PURPLE, continue_rect, 3, border_radius=10)
-            
-            continue_text = self.font_medium.render("Continue", True, WHITE)
-            continue_text_rect = continue_text.get_rect(center=continue_rect.center)
-            screen.blit(continue_text, continue_text_rect)
+            # Continue button (only show if correct)
+            if self.correct:
+                continue_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, 680, 200, 50)
+                pygame.draw.rect(screen, PURPLE, continue_rect, border_radius=10)
+                pygame.draw.rect(screen, DARK_PURPLE, continue_rect, 3, border_radius=10)
+                
+                continue_text = self.font_medium.render("Continue", True, WHITE)
+                continue_text_rect = continue_text.get_rect(center=continue_rect.center)
+                screen.blit(continue_text, continue_text_rect)
+            else:
+                # Show retry instruction
+                retry_text = self.font_small.render("Choose another answer", True, GRAY)
+                retry_rect = retry_text.get_rect(centerx=SCREEN_WIDTH // 2, top=680)
+                screen.blit(retry_text, retry_rect)
     
     def draw_wrapped_text(self, screen, text, x, y, max_width, color, font):
         """Draw text with word wrapping"""

@@ -22,9 +22,10 @@ class Game:
         # Game state
         self.running = True
         self.level = 1
+        self.max_levels = 5
         self.score = 0
         self.lives = INITIAL_LIVES
-        self.state = "playing"  # playing, quiz, game_over
+        self.state = "playing"  # playing, quiz, victory, game_over
         
         # Touch/swipe controls
         self.touch_start = None
@@ -46,16 +47,37 @@ class Game:
         
         print("Game initialized successfully!")
         
-        # Load and play background music
+        # Load romantic background music (will start on first interaction for web)
+        self.music_loaded = False
+        self.romantic_music = None
+        self.load_music()
+    
+    def load_music(self):
+        """Load and play romantic background music"""
+        if self.music_loaded:
+            return
+            
         try:
-            import sys
-            if sys.platform != "emscripten":
-                # Only load music on desktop, not web
-                pygame.mixer.music.load('assets/music/peppy_love_theme.wav')
-                pygame.mixer.music.set_volume(0.5)
-                pygame.mixer.music.play(-1)  # Loop forever
+            print("Attempting to load romantic music...")
+            # Ensure mixer is initialized
+            if not pygame.mixer.get_init():
+                pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+                print("Mixer initialized")
+            
+            from src.romantic_music import generate_romantic_music
+            self.romantic_music = generate_romantic_music()
+            print(f"Music object created: {self.romantic_music}")
+            
+            self.romantic_music.set_volume(0.5)  # Increased volume
+            self.romantic_music.play(-1)  # Loop forever
+            self.music_loaded = True
+            print(f"Romantic music playing successfully at volume {self.romantic_music.get_volume()}")
+        except ImportError as e:
+            print(f"Import error - numpy may not be available: {e}")
         except Exception as e:
-            print(f"Could not load music: {e}")
+            print(f"Could not load romantic music: {e}")
+            import traceback
+            traceback.print_exc()
     
     def handle_events(self):
         """Handle input events"""
@@ -69,6 +91,10 @@ class Game:
                     self.reset_level()
             # Touch/Mouse events
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Start music on first click (for web browsers)
+                if not self.music_loaded:
+                    self.load_music()
+                    
                 self.touch_start = event.pos
                 self.touch_start_time = pygame.time.get_ticks() / 1000.0
             elif event.type == pygame.MOUSEBUTTONUP:
@@ -86,12 +112,28 @@ class Game:
                                 # Award points for correct answer
                                 if self.quiz.correct:
                                     self.score += 50
-                                # Move to next level
-                                self.next_level()
-                                self.state = "playing"
+                                # Check if game is complete
+                                if self.level >= self.max_levels:
+                                    self.state = "victory"
+                                else:
+                                    # Move to next level
+                                    self.next_level()
+                                    self.state = "playing"
+                    elif self.state == "victory":
+                        # Victory screen - any click restarts game
+                        self.level = 1
+                        self.score = 0
+                        self.lives = INITIAL_LIVES
+                        self.maze = Maze(self.level)
+                        self.player = Player(self.maze.start_pos, self.maze)
+                        self.state = "playing"
                     elif self.state == "playing":
+                        # Check volume controls first
+                        if self.ui.handle_volume_click(touch_end, self):
+                            # Volume control was clicked, don't process as movement
+                            pass
                         # Game screen - handle tap/swipe
-                        if distance < self.tap_threshold and touch_duration < self.tap_time_threshold:
+                        elif distance < self.tap_threshold and touch_duration < self.tap_time_threshold:
                             self.handle_tap(touch_end)
                         else:
                             self.handle_swipe(self.touch_start, touch_end)
@@ -357,6 +399,79 @@ class Game:
         self.maze = Maze(self.level)
         self.player = Player(self.maze.start_pos, self.maze)
     
+    def draw_victory_screen(self):
+        """Draw the victory screen after completing all 5 levels"""
+        self.screen.fill(LIGHT_PINK)
+        
+        # Create fonts
+        title_font = pygame.font.Font(None, 48)
+        message_font = pygame.font.Font(None, 32)
+        small_font = pygame.font.Font(None, 24)
+        
+        # Title
+        title = title_font.render("Congratulations!", True, DARK_RED)
+        title_rect = title.get_rect(centerx=SCREEN_WIDTH // 2, top=100)
+        self.screen.blit(title, title_rect)
+        
+        # Heart decoration
+        for i in range(5):
+            x = SCREEN_WIDTH // 2 - 60 + i * 30
+            self.draw_pixel_heart(self.screen, x, 180, 20, HOT_PINK)
+        
+        # Victory message
+        messages = [
+            "You've completed all 5 levels!",
+            "",
+            f"Final Score: {self.score}",
+            "",
+            "Love conquers all mazes! ♥",
+            "",
+            "",
+            "I give you my heart,",
+            "forever more.",
+            "",
+            "- Joe"
+        ]
+        
+        y = 240
+        for msg in messages:
+            if msg:
+                text = message_font.render(msg, True, PURPLE)
+                text_rect = text.get_rect(centerx=SCREEN_WIDTH // 2, top=y)
+                self.screen.blit(text, text_rect)
+            y += 45
+        
+        # Play again instruction
+        restart = small_font.render("Tap anywhere to play again", True, GRAY)
+        restart_rect = restart.get_rect(centerx=SCREEN_WIDTH // 2, bottom=SCREEN_HEIGHT - 50)
+        self.screen.blit(restart, restart_rect)
+    
+    def draw_pixel_heart(self, screen, cx, cy, size, color):
+        """Draw a pixelated heart"""
+        pixel = size // 4
+        
+        heart_pattern = [
+            [0, 1, 1, 0, 0, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 0, 0, 0],
+        ]
+        
+        start_x = cx - (4 * pixel)
+        start_y = cy - (3 * pixel)
+        
+        for row_idx, row in enumerate(heart_pattern):
+            for col_idx, cell in enumerate(row):
+                if cell:
+                    rect = pygame.Rect(
+                        start_x + col_idx * pixel,
+                        start_y + row_idx * pixel,
+                        pixel, pixel
+                    )
+                    pygame.draw.rect(screen, color, rect)
+    
     def render(self):
         """Render game"""
         # Clear screen with love theme background
@@ -365,6 +480,9 @@ class Game:
         if self.state == "quiz":
             # Draw quiz screen
             self.quiz.draw(self.screen)
+        elif self.state == "victory":
+            # Draw victory screen
+            self.draw_victory_screen()
         else:
             # Draw game screen
             # Draw maze
@@ -374,7 +492,7 @@ class Game:
             self.player.draw(self.screen)
             
             # Draw UI
-            self.ui.draw(self.screen, self.level, self.score, self.lives)
+            self.ui.draw(self.screen, self.level, self.score, self.lives, self)
         
         # Update display
         pygame.display.flip()
